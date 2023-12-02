@@ -12,13 +12,17 @@ templates = Jinja2Templates(directory="templates")
 # SQLite database setup
 engine = create_engine("sqlite:///./test.db")
 metadata = MetaData()
+
+# Define a table
 users = Table('users', metadata,
               Column('id', Integer, primary_key=True),
               Column('name', String),
               Column('age', Integer)
               )
+# Create the defined table in the SQLite database.
 metadata.create_all(engine)
 
+# Set up a session to interact with the database using SQLAlchemy.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Model for form data
@@ -39,6 +43,8 @@ def find_column_index(headers, column_name):
 def read_root(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
 
+
+# Endpoint to handle file upload and save data to the SQLite database.
 @app.post("/")
 async def create_upload_file(request: Request, file: UploadFile = File(...)):
     contents = await file.read()
@@ -54,6 +60,7 @@ async def create_upload_file(request: Request, file: UploadFile = File(...)):
     name_column_index = find_column_index(headers, name_column_name)
     age_column_index = find_column_index(headers, age_column_name)
 
+    # Check if the specified columns are found in the CSV file.
     if name_column_index is None or age_column_index is None:
         return {"error": "Columns 'Name' and 'Age' not found in the CSV file"}
 
@@ -68,7 +75,8 @@ async def create_upload_file(request: Request, file: UploadFile = File(...)):
             session.execute(new_user)
         session.commit()
 
-    # Prepare data to display in the frontend
+    # data to display in the frontend
     display_data = list(zip(name_column_data, age_column_data))
 
+    # Render the template with the uploaded file content.
     return templates.TemplateResponse("upload.html", {"request": request, "file_content": display_data})
