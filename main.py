@@ -26,3 +26,49 @@ class Item:
     def __init__(self, name: str, age: int):
         self.name = name
         self.age = age
+
+# Function to find column index by name
+def find_column_index(headers, column_name):
+    try:
+        return headers.index(column_name)
+    except ValueError:
+        return None
+
+# Root endpoint to render the form
+@app.get("/")
+def read_root(request: Request):
+    return templates.TemplateResponse("upload.html", {"request": request})
+
+@app.post("/")
+async def create_upload_file(request: Request, file: UploadFile = File(...)):
+    contents = await file.read()
+    decoded_content = contents.decode('utf-8').splitlines()
+    csv_data = list(csv.reader(decoded_content))
+
+    # Assuming the columns "Name" and "Age" are specified in the template
+    name_column_name = "Name"
+    age_column_name = "Age"
+
+    # Find column indices dynamically
+    headers = csv_data[0]
+    name_column_index = find_column_index(headers, name_column_name)
+    age_column_index = find_column_index(headers, age_column_name)
+
+    if name_column_index is None or age_column_index is None:
+        return {"error": "Columns 'Name' and 'Age' not found in the CSV file"}
+
+    # Extract data from columns
+    name_column_data = [row[name_column_index] for row in csv_data]
+    age_column_data = [row[age_column_index] for row in csv_data]
+
+    # Save data to the SQLite database
+    with SessionLocal() as session:
+        for name_value, age_value in zip(name_column_data, age_column_data):
+            new_user = users.insert().values(name=name_value, age=age_value)
+            session.execute(new_user)
+        session.commit()
+
+    # Prepare data to display in the frontend
+    display_data = list(zip(name_column_data, age_column_data))
+
+    return templates.TemplateResponse("upload.html", {"request": request, "file_content": display_data})
