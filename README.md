@@ -44,3 +44,9 @@ This project demonstrates a FastAPI web application that allows users to upload 
 - `main.py`: FastAPI application code.
 - `templates/`: Directory containing Jinja2 templates.
   - `upload.html`: HTML template for the file upload form and displayed data.
+
+## Asumption
+I assume that firstline of data consist is header and data have many filds
+for example:
+Name,Last Name,Email,Phone,Gender,Age,Job Title,Years Of Experience,Salary,Department
+Age,User Id,Name,Last Name,Sex,Email,Phone,Date of birth,Job Title
